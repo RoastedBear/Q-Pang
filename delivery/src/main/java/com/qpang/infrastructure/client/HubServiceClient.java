@@ -8,7 +8,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.List;
 import java.util.UUID;
 
-@FeignClient(name = "hub-service", url = "http://localhost:8085")
+@FeignClient(
+        name = "hub-service",
+        url = "http://localhost:8085",
+        fallback = HubServiceClientFallback.class
+)
 public interface HubServiceClient {
 
     @GetMapping("/api/hub-routes/path")

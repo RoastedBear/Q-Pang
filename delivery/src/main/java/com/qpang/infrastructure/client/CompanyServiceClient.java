@@ -9,7 +9,11 @@ import org.springframework.web.bind.annotation.RequestHeader;
 
 import java.util.UUID;
 
-@FeignClient(name = "company-service", url = "http://localhost:8083")
+@FeignClient(
+        name = "hub-service",
+        url = "http://localhost:8085",
+        fallback = HubServiceClientFallback.class
+)
 public interface CompanyServiceClient {
 
     @GetMapping("/companies/{id}")
