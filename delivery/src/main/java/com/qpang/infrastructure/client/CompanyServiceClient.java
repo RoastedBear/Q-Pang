@@ -10,9 +10,9 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import java.util.UUID;
 
 @FeignClient(
-        name = "hub-service",
-        url = "http://localhost:8085",
-        fallback = HubServiceClientFallback.class
+        name = "company-service",
+        url = "http://localhost:8083",
+        fallback = CompanyServiceClientFallback.class
 )
 public interface CompanyServiceClient {
 

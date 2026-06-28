@@ -21,6 +21,22 @@ spring:
       circuitbreaker:
         enabled: true
 
+  main:
+    allow-bean-definition-overriding: true
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: delivery-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
 server:
   port: 8087
 
@@ -48,7 +64,7 @@ slack:
 
 jwt:
   secret:
-    key: ${JWT_SECRET_KEY}
+    key: ${JWT_SECRET_KEY:dGhpc0lzQVNlY3JldEtleUZvckp3dFRva2VuR2VuZXJhdGlvbkFuZEl0TmVlZHNUb0JlQXRMZWFzdDI1NkJpdHNMb25n}
 
 logging:
   pattern:
@@ -72,16 +88,3 @@ resilience4j:
         failureRateThreshold: 50
         waitDurationInOpenState: 10s
         permittedNumberOfCallsInHalfOpenState: 3
-
-  kafka:
-    bootstrap-servers: localhost:9092
-    consumer:
-      group-id: delivery-service
-      auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-      properties:
-        spring.json.trusted.packages: "*"
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
