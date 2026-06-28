@@ -1,5 +1,7 @@
 package com.qpang.orderservice.application;
 
+import com.qpang.orderservice.infrastructure.kafka.OrderEventProducer;
+import com.qpang.orderservice.infrastructure.kafka.event.OrderCreatedEvent;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.qpang.common.exception.CustomException;
@@ -32,7 +34,7 @@ import org.springframework.stereotype.Service;
 public class OrderService {
     private final OrderRepository orderRepository;
     private final ProductStockClient productStockClient;
-    private final DeliveryClient deliveryClient;
+    private final OrderEventProducer orderEventProducer;
     private static final List<Integer> ALLOWED_PAGE_SIZES = List.of(10, 30, 50);
 
     public Order createOrder(CreateOrderCommand command){
@@ -56,7 +58,9 @@ public class OrderService {
 
     public OrderResponse createOrderFromRequest(CreateOrderRequest req, UUID userId, String userRole) {
         List<CreateOrderItemCommand> lines =
-                req.items().stream().map(i -> new CreateOrderItemCommand(i.productId(), i.quantity())).toList();
+                req.items().stream()
+                        .map(i -> new CreateOrderItemCommand(i.productId(), i.quantity()))
+                        .toList();
 
         CreateOrderCommand command = new CreateOrderCommand(
                 req.supplyCompanyId(),
@@ -70,14 +74,19 @@ public class OrderService {
         );
 
         Order order = createOrder(command);
-        var deliveryRes = deliveryClient.create(
-                new DeliveryClient.CreateDeliveryRequest(
-                        order.getId(),
-                        order.getSupplyCompanyId(),
-                        order.getRequestCompanyId()),
+
+        List<OrderCreatedEvent.OrderItemEvent> itemEvents = lines.stream()
+                .map(i -> new OrderCreatedEvent.OrderItemEvent(i.productId(), i.quantity()))
+                .toList();
+
+        orderEventProducer.sendOrderCreated(new OrderCreatedEvent(
+                order.getId(),
+                order.getSupplyCompanyId(),
+                order.getRequestCompanyId(),
                 userId,
-                userRole);
-        order.assignDelivery(deliveryRes.deliveryId());
+                itemEvents
+        ));
+
         orderRepository.save(order);
         return OrderResponse.from(order);
     }
