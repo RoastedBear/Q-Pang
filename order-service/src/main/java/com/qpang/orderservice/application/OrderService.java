@@ -2,6 +2,7 @@ package com.qpang.orderservice.application;
 
 import com.qpang.orderservice.infrastructure.kafka.OrderEventProducer;
 import com.qpang.orderservice.infrastructure.kafka.event.OrderCreatedEvent;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.qpang.common.exception.CustomException;
@@ -28,6 +29,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Transactional
 @RequiredArgsConstructor
 @Service
@@ -157,5 +159,13 @@ public class OrderService {
             return order;
         }).orElseThrow(()
                 -> new CustomException(OrderErrorCode.ORDER_NOT_FOUND));
+    }
+
+    @Transactional
+    public void cancelOrderBySystem(UUID orderId, String reason) {
+        Order order = orderRepository.findByIdAndDeletedAtIsNull(orderId)
+                .orElseThrow(() -> new CustomException(OrderErrorCode.ORDER_NOT_FOUND));
+        order.changeStatus(OrderStatus.CANCELLED);
+        log.warn("[Saga 보상 트랜잭션] 주문 취소 처리 완료 - orderId: {}, reason: {}", orderId, reason);
     }
 }
